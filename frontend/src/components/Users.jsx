@@ -1,21 +1,45 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Button } from "./Button"
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-
+// Custom debounce function
+const debounce = (func, delay) => {
+    let timeoutId;
+    return (...args) => {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func(...args), delay);
+    };
+};
 
 export const Users = () => {
     // Replace with backend call
     const [users, setUsers] = useState([]);
     const [filter, setFilter] = useState("");
 
+    // useEffect(() => {
+    //     axios.get("http://localhost:3000/api/v1/user/bulk?filter=" + filter)
+    //         .then(response => {
+    //             setUsers(response.data.user)
+    //         })
+    // }, [filter])
+
+    // Debounced function to fetch users
+    const fetchUsers = useCallback(
+        debounce(async (filter) => {
+            try {
+                const response = await axios.get(`http://localhost:3000/api/v1/user/bulk?filter=${filter}`);
+                setUsers(response.data.user);
+            } catch (error) {
+                console.error("Error fetching users:", error);
+            }
+        }, 300), // Debounce delay
+        []
+    );
+
     useEffect(() => {
-        axios.get("http://localhost:3000/api/v1/user/bulk?filter=" + filter)
-            .then(response => {
-                setUsers(response.data.user)
-            })
-    }, [filter])
+        fetchUsers(filter);
+    }, [filter]);
 
     return <>
         <div className="font-bold mt-6 text-lg">
